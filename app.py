@@ -1,5 +1,5 @@
 import streamlit as st
-import joblib
+import pickle
 import numpy as np
 import pandas as pd
 
@@ -14,8 +14,9 @@ st.set_page_config(
 @st.cache_resource
 def load_model():
     try:
-        # Load the model from the same directory
-        model = joblib.load('salary_model.pkl')
+        # Load the model using pickle (rb = read binary)
+        with open('salary_model.pkl', 'rb') as file:
+            model = pickle.load(file)
         return model
     except FileNotFoundError:
         st.error("Error: 'salary_model.pkl' not found. Please ensure the model file is in the same directory as app.py.")
@@ -32,7 +33,6 @@ st.markdown("This app uses a **Decision Tree Regressor** to predict salary based
 st.markdown("---")
 
 # 4. User Input
-# We use a column layout to center the input slightly or make it look neat
 col1, col2 = st.columns([1, 2])
 
 with col1:
@@ -51,8 +51,7 @@ with col2:
 # 5. Prediction Logic
 if st.button("Predict Salary", type="primary"):
     if model is not None:
-        # The model expects a 2D array or DataFrame. 
-        # Since training used df[['YearsExperience']], we pass a 2D numpy array.
+        # The model expects a 2D array.
         input_data = np.array([[years_experience]])
         
         try:
@@ -60,8 +59,6 @@ if st.button("Predict Salary", type="primary"):
             
             # Display Result
             st.success(f"Predicted Salary: ${prediction[0]:,.2f}")
-            
-            # Optional: Show a visual gauge or context
             st.info(f"The model estimates this salary based on {years_experience} years of experience.")
             
         except Exception as e:
