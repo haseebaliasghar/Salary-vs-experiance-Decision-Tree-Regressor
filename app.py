@@ -2,6 +2,7 @@ import streamlit as st
 import pickle
 import numpy as np
 import pandas as pd
+import sklearn # Explicitly import sklearn to ensure pickle can resolve the model class
 
 # 1. Page Configuration
 st.set_page_config(
