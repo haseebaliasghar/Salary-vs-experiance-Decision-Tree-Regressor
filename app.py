@@ -1,29 +1,74 @@
-%%writefile app.py
 import streamlit as st
 import joblib
 import numpy as np
+import pandas as pd
 
-# 1. Load the trained model
-# Ensure 'salary_model.pkl' is in the same directory/repo as this file
-model = joblib.load('salary_model.pkl')
+# 1. Page Configuration
+st.set_page_config(
+    page_title="Salary Predictor",
+    page_icon="💰",
+    layout="centered"
+)
 
-# 2. App Title & Description
-st.title("Salary Predictor (Task 3)")
-st.write("""
-### Estimate Your Salary
-Use the slider below to input years of experience. The model uses a **Decision Tree Regressor** trained on the Kaggle Salary dataset to predict the expected salary.
-""")
+# 2. Load the Model
+@st.cache_resource
+def load_model():
+    try:
+        # Load the model from the same directory
+        model = joblib.load('salary_model.pkl')
+        return model
+    except FileNotFoundError:
+        st.error("Error: 'salary_model.pkl' not found. Please ensure the model file is in the same directory as app.py.")
+        return None
+    except Exception as e:
+        st.error(f"An error occurred loading the model: {e}")
+        return None
 
-# 3. Input Slider
-years_exp = st.slider("Years of Experience", 0.0, 15.0, 5.0, step=0.1)
+model = load_model()
 
-# 4. Prediction Button
-if st.button("Predict Salary"):
-    # Reshape input to 2D array [1 row, 1 column]
-    input_data = np.array([[years_exp]])
-    
-    # Predict
-    prediction = model.predict(input_data)
-    
-    # Display Result
-    st.success(f"Estimated Salary: **${prediction[0]:,.2f}**")
+# 3. UI Design
+st.title("💰 Salary vs. Experience Predictor")
+st.markdown("This app uses a **Decision Tree Regressor** to predict salary based on years of experience.")
+st.markdown("---")
+
+# 4. User Input
+# We use a column layout to center the input slightly or make it look neat
+col1, col2 = st.columns([1, 2])
+
+with col1:
+    st.image("https://cdn-icons-png.flaticon.com/512/2910/2910791.png", width=100)
+
+with col2:
+    years_experience = st.number_input(
+        "Enter Years of Experience:",
+        min_value=0.0,
+        max_value=50.0,
+        value=1.0,
+        step=0.1,
+        help="Enter the total years of professional experience."
+    )
+
+# 5. Prediction Logic
+if st.button("Predict Salary", type="primary"):
+    if model is not None:
+        # The model expects a 2D array or DataFrame. 
+        # Since training used df[['YearsExperience']], we pass a 2D numpy array.
+        input_data = np.array([[years_experience]])
+        
+        try:
+            prediction = model.predict(input_data)
+            
+            # Display Result
+            st.success(f"Predicted Salary: ${prediction[0]:,.2f}")
+            
+            # Optional: Show a visual gauge or context
+            st.info(f"The model estimates this salary based on {years_experience} years of experience.")
+            
+        except Exception as e:
+            st.error(f"Error making prediction: {e}")
+    else:
+        st.warning("Model not loaded. Please check the file structure.")
+
+# Footer
+st.markdown("---")
+st.caption("Built with Streamlit & Scikit-Learn | Deployed via GitHub")
